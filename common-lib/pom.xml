@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.shopdarcel</groupId>
+        <artifactId>shopdarcel-parent</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>common-lib</artifactId>
+    <packaging>jar</packaging>
+
+    <name>ShopDarcel :: common-lib</name>
+    <description>
+        Shared library consumed by every ShopDarcel service. Contains
+        Kafka event DTOs, BaseEntity, the shared exception hierarchy,
+        response envelopes (ApiError/ApiResponse/PagedResponse), and
+        Kafka topic + app-wide constants. No business logic, no
+        controllers, no service-specific code lives here.
+    </description>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-jsr310</artifactId>
+        </dependency>
+
+        <!-- Lombok is already inherited from the parent POM as `provided`. -->
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!--
+                No spring-boot-maven-plugin here. common-lib is a library
+                JAR consumed by other modules on the classpath, not a
+                runnable Spring Boot application — it has no
+                @SpringBootApplication main class, so `repackage` would
+                fail if this plugin were bound. Each *-service module adds
+                it independently.
+            -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <!-- version + annotationProcessorPaths inherited from
+                     pluginManagement in the parent POM -->
+            </plugin>
+        </plugins>
+    </build>
+</project>
