@@ -49,13 +49,18 @@ public class ApiResponse<T> {
      * Shorthand for a successful response carrying only a payload, no message.
      */
     public static <T> ApiResponse<T> of(T data) {
-        return ApiResponse.<T>builder().data(data).build();
+        return ApiResponse.<T>builder()
+                .data(data)
+                .build();
     }
 
     /**
      * Shorthand for a successful response carrying a payload and a message.
      */
     public static <T> ApiResponse<T> of(T data, String message) {
-        return ApiResponse.<T>builder().data(data).message(message).build();
+        return ApiResponse.<T>builder()
+                .data(data)
+                .message(message)
+                .build();
     }
 }

@@ -61,7 +61,18 @@ public class PagedResponse<T> {
      * optionally re-mapping each element via {@code mapper} (e.g. entity -> DTO).
      */
     public static <T, R> PagedResponse<R> of(Page<T> page, java.util.function.Function<T, R> mapper) {
-        return PagedResponse.<R>builder().content(page.getContent().stream().map(mapper).toList()).pageNumber(page.getNumber()).pageSize(page.getSize()).totalElements(page.getTotalElements()).totalPages(page.getTotalPages()).last(page.isLast()).first(page.isFirst()).build();
+        return PagedResponse.<R>builder()
+                .content(page.getContent()
+                        .stream()
+                        .map(mapper)
+                        .toList())
+                .pageNumber(page.getNumber())
+                .pageSize(page.getSize())
+                .totalElements(page.getTotalElements())
+                .totalPages(page.getTotalPages())
+                .last(page.isLast())
+                .first(page.isFirst())
+                .build();
     }
 
     /**

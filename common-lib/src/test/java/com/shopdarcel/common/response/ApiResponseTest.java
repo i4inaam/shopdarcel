@@ -27,8 +27,7 @@ class ApiResponseTest {
 
     @Test
     void builder_allowsOverridingSuccessToFalse() {
-        ApiResponse<String> response = ApiResponse
-                .<String>builder()
+        ApiResponse<String> response = ApiResponse.<String>builder()
                 .success(false)
                 .message("Something odd, but not an error")
                 .build();

@@ -17,7 +17,8 @@ public final class DateUtil {
      * Formatter matching {@code AppConstants.TIMESTAMP_FORMAT}, fixed to
      * UTC so formatted output never depends on the JVM's default zone.
      */
-    private static final DateTimeFormatter TIMESTAMP_FORMATTER = DateTimeFormatter.ofPattern(AppConstants.TIMESTAMP_FORMAT).withZone(ZoneOffset.UTC);
+    private static final DateTimeFormatter TIMESTAMP_FORMATTER = DateTimeFormatter.ofPattern(AppConstants.TIMESTAMP_FORMAT)
+            .withZone(ZoneOffset.UTC);
 
     private DateUtil() {
         // Utility class — never instantiated.

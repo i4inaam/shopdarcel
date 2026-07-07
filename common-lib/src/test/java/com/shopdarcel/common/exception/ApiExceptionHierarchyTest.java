@@ -38,8 +38,7 @@ class ApiExceptionHierarchyTest {
 
     @Test
     void validationException_withFieldErrors_returnsThemUnmodified() {
-        var fieldError = com.shopdarcel.common.response.ApiError.FieldError
-                .builder()
+        var fieldError = com.shopdarcel.common.response.ApiError.FieldError.builder()
                 .field("email")
                 .rejectedValue("notanemail")
                 .message("Must be a valid email address")
@@ -48,12 +47,10 @@ class ApiExceptionHierarchyTest {
         var ex = new ValidationException("Validation failed", List.of(fieldError));
 
         assertThat(ex.getFieldErrors()).hasSize(1);
-        assertThat(ex
-                .getFieldErrors()
+        assertThat(ex.getFieldErrors()
                 .get(0)
                 .getField()).isEqualTo("email");
-        assertThat(ex
-                .getFieldErrors()
+        assertThat(ex.getFieldErrors()
                 .get(0)
                 .getRejectedValue()).isEqualTo("notanemail");
     }

@@ -11,7 +11,8 @@ class DateUtilTest {
 
     @Test
     void format_thenParse_roundTripsToTheMillisecond() {
-        Instant original = Instant.now().truncatedTo(ChronoUnit.MILLIS);
+        Instant original = Instant.now()
+                .truncatedTo(ChronoUnit.MILLIS);
 
         String formatted = DateUtil.format(original);
         Instant parsed = DateUtil.parse(formatted);
@@ -33,7 +34,8 @@ class DateUtilTest {
 
     @Test
     void isPast_returnsTrueForInstantBeforeNow() {
-        Instant past = Instant.now().minusSeconds(60);
+        Instant past = Instant.now()
+                .minusSeconds(60);
 
         assertThat(DateUtil.isPast(past)).isTrue();
         assertThat(DateUtil.isFuture(past)).isFalse();
@@ -41,7 +43,8 @@ class DateUtilTest {
 
     @Test
     void isFuture_returnsTrueForInstantAfterNow() {
-        Instant future = Instant.now().plusSeconds(60);
+        Instant future = Instant.now()
+                .plusSeconds(60);
 
         assertThat(DateUtil.isFuture(future)).isTrue();
         assertThat(DateUtil.isPast(future)).isFalse();
