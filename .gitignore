@@ -23,4 +23,3 @@ buildNumber.properties
 
 # Secrets
 **/application-dev.yml
-**/application-prod.yml
