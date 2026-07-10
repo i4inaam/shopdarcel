@@ -2,6 +2,7 @@ package com.shopdarcel.user;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 
 /**
  * Entry point for the user-service application.
@@ -13,6 +14,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * (config, controller, service, repository, etc.).
  */
 @SpringBootApplication
+@EnableJpaAuditing
 public class UserServiceApplication {
 
     public static void main(String[] args) {

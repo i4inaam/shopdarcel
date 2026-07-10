@@ -24,8 +24,8 @@ public class UserResponse {
     private String email;
     private String firstName;
     private String lastName;
-    private boolean isActive;
-    private boolean isEmailVerified;
+    private boolean active;
+    private boolean emailVerified;
     private UserRole role;
     private Instant createdAt;
 }

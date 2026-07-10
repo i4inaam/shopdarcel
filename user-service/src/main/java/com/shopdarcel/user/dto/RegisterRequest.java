@@ -18,22 +18,26 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@ToString
 public class RegisterRequest {
 
     @NotBlank(message = "Email is required")
     @Email(message = "Must be a valid email address")
+    @Pattern(regexp = "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$", message = "Email must include a valid domain, e.g. name@example.com")
     private String email;
 
     @NotBlank(message = "Password is required")
-    @Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).{8,}$", message = "Min 8 characters, 1 uppercase, 1 lowercase, 1 number")
+    @Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).{8,}$", message = "Password must contain at least 8 characters, including one uppercase letter, one lowercase letter, and one number")
     private String password;
 
     @NotBlank(message = "First name is required")
+    @Pattern(regexp = "^[\\p{L} '-]+$", message = "First name can only contain letters, spaces, hyphens, and apostrophes")
     private String firstName;
 
     /**
      * Optional — matches {@link com.shopdarcel.user.entity.User#getLastName()}.
      */
+    @Pattern(regexp = "^[\\p{L} '-]*$", message = "Last name can only contain letters, spaces, hyphens, and apostrophes")
     private String lastName;
 
     /**

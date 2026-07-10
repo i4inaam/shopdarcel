@@ -25,6 +25,7 @@ import java.time.Instant;
 @AllArgsConstructor
 @Builder
 @EqualsAndHashCode(callSuper = true, of = {})
+@ToString
 public class User extends BaseEntity {
 
     @Column(name = "email", nullable = false, unique = true)
@@ -52,14 +53,14 @@ public class User extends BaseEntity {
      */
     @Builder.Default
     @Column(name = "is_active", nullable = false)
-    private boolean isActive = true;
+    private boolean active = true;
 
     /**
      * Defaults to {@code false} until the user confirms their email.
      */
     @Builder.Default
     @Column(name = "is_email_verified", nullable = false)
-    private boolean isEmailVerified = false;
+    private boolean emailVerified = false;
 
     /**
      * Exact timestamp the user accepted the platform's terms and conditions, for legal/audit purposes.
