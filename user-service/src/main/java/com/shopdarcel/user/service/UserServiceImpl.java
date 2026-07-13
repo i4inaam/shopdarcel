@@ -1,10 +1,12 @@
 package com.shopdarcel.user.service;
 
+import com.shopdarcel.common.dto.kafka.UserRegisteredEvent;
 import com.shopdarcel.common.exception.ConflictException;
 import com.shopdarcel.user.dto.RegisterRequest;
 import com.shopdarcel.user.dto.UserResponse;
 import com.shopdarcel.user.entity.User;
 import com.shopdarcel.user.entity.UserRole;
+import com.shopdarcel.user.kafka.UserEventProducer;
 import com.shopdarcel.user.mapper.UserMapper;
 import com.shopdarcel.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +31,7 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
+    private final UserEventProducer eventProducer;
 
     @Override
     @Transactional
@@ -51,6 +54,26 @@ public class UserServiceImpl implements UserService {
 
         User savedUser = userRepository.save(user);
 
+        UserRegisteredEvent event = UserRegisteredEvent.builder()
+                .eventId(java.util.UUID.randomUUID())
+                .occurredAt(now)
+                .userId(savedUser.getId())
+                .email(savedUser.getEmail())
+                .fullName(buildFullName(savedUser))
+                .role(savedUser.getRole()
+                        .name())
+                .build();
+
+        eventProducer.publishUserRegistered(event);
+
         return userMapper.toResponse(savedUser);
+    }
+
+    private String buildFullName(User user) {
+        if (user.getLastName() == null || user.getLastName()
+                .isBlank()) {
+            return user.getFirstName();
+        }
+        return user.getFirstName() + " " + user.getLastName();
     }
 }
