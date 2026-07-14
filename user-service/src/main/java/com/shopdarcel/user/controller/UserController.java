@@ -1,5 +1,7 @@
 package com.shopdarcel.user.controller;
 
+import com.shopdarcel.user.dto.LoginRequest;
+import com.shopdarcel.user.dto.LoginResponse;
 import com.shopdarcel.user.dto.RegisterRequest;
 import com.shopdarcel.user.dto.UserResponse;
 import com.shopdarcel.user.service.UserService;
@@ -33,5 +35,17 @@ public class UserController {
         UserResponse response = userService.register(request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(response);
+    }
+
+    /**
+     * Authenticates a user and issues access/refresh tokens.
+     *
+     * @param request login credentials
+     * @return tokens and basic user profile info, with HTTP 200 OK
+     */
+    @PostMapping("/login")
+    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
+        LoginResponse response = userService.login(request);
+        return ResponseEntity.ok(response);
     }
 }

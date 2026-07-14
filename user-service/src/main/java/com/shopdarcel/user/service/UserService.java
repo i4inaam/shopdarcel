@@ -1,5 +1,7 @@
 package com.shopdarcel.user.service;
 
+import com.shopdarcel.user.dto.LoginRequest;
+import com.shopdarcel.user.dto.LoginResponse;
 import com.shopdarcel.user.dto.RegisterRequest;
 import com.shopdarcel.user.dto.UserResponse;
 
@@ -20,4 +22,17 @@ public interface UserService {
      * @throws com.shopdarcel.common.exception.ConflictException if the email is already registered
      */
     UserResponse register(RegisterRequest request);
+
+    /**
+     * Authenticates a user and issues access/refresh tokens.
+     * <p>
+     * Tracks failed login attempts for brute-force protection: after 5
+     * consecutive failures, the account is locked via {@code accountLockedAt}.
+     *
+     * @param request login credentials
+     * @return tokens and basic user profile info
+     * @throws com.shopdarcel.common.exception.UnauthorizedException if credentials are invalid
+     * @throws com.shopdarcel.common.exception.ForbiddenException    if the account is locked or deactivated
+     */
+    LoginResponse login(LoginRequest request);
 }

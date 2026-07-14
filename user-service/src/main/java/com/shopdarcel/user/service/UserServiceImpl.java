@@ -2,6 +2,10 @@ package com.shopdarcel.user.service;
 
 import com.shopdarcel.common.dto.kafka.UserRegisteredEvent;
 import com.shopdarcel.common.exception.ConflictException;
+import com.shopdarcel.common.exception.ForbiddenException;
+import com.shopdarcel.common.exception.UnauthorizedException;
+import com.shopdarcel.user.dto.LoginRequest;
+import com.shopdarcel.user.dto.LoginResponse;
 import com.shopdarcel.user.dto.RegisterRequest;
 import com.shopdarcel.user.dto.UserResponse;
 import com.shopdarcel.user.entity.User;
@@ -9,6 +13,7 @@ import com.shopdarcel.user.entity.UserRole;
 import com.shopdarcel.user.kafka.UserEventProducer;
 import com.shopdarcel.user.mapper.UserMapper;
 import com.shopdarcel.user.repository.UserRepository;
+import com.shopdarcel.user.security.JwtService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -32,6 +37,8 @@ public class UserServiceImpl implements UserService {
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
     private final UserEventProducer eventProducer;
+    private final JwtService jwtService;
+    private final LoginAttemptService loginAttemptService;
 
     @Override
     @Transactional
@@ -75,5 +82,39 @@ public class UserServiceImpl implements UserService {
             return user.getFirstName();
         }
         return user.getFirstName() + " " + user.getLastName();
+    }
+
+    @Override
+    @Transactional
+    public LoginResponse login(LoginRequest request) {
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new UnauthorizedException("Invalid email or password"));
+
+        if (user.getAccountLockedAt() != null) {
+            throw new ForbiddenException("Account is locked due to too many failed login attempts. Please reset your password to unlock it.");
+        }
+
+        if (!user.isActive()) {
+            throw new ForbiddenException("Account is deactivated. Please contact support or reactivate your account.");
+        }
+
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            loginAttemptService.recordFailedAttempt(user);
+            throw new UnauthorizedException("Invalid email or password");
+        }
+
+        user.setFailedLoginAttempts(0);
+        user.setAccountLockedAt(null);
+        user.setLastLoginAt(Instant.now());
+        userRepository.save(user);
+
+        String accessToken = jwtService.generateAccessToken(user);
+        String refreshToken = jwtService.generateRefreshToken(user);
+
+        return LoginResponse.builder()
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .user(userMapper.toResponse(user))
+                .build();
     }
 }
