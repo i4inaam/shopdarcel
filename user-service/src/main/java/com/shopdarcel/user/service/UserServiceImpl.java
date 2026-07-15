@@ -4,10 +4,8 @@ import com.shopdarcel.common.dto.kafka.UserRegisteredEvent;
 import com.shopdarcel.common.exception.ConflictException;
 import com.shopdarcel.common.exception.ForbiddenException;
 import com.shopdarcel.common.exception.UnauthorizedException;
-import com.shopdarcel.user.dto.LoginRequest;
-import com.shopdarcel.user.dto.LoginResponse;
-import com.shopdarcel.user.dto.RegisterRequest;
-import com.shopdarcel.user.dto.UserResponse;
+import com.shopdarcel.user.constants.AuthMessages;
+import com.shopdarcel.user.dto.*;
 import com.shopdarcel.user.entity.User;
 import com.shopdarcel.user.entity.UserRole;
 import com.shopdarcel.user.kafka.UserEventProducer;
@@ -44,7 +42,7 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public UserResponse register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new ConflictException("Email is already registered");
+            throw new ConflictException(AuthMessages.EMAIL_ALREADY_REGISTERED);
         }
 
         Instant now = Instant.now();
@@ -67,8 +65,7 @@ public class UserServiceImpl implements UserService {
                 .userId(savedUser.getId())
                 .email(savedUser.getEmail())
                 .fullName(buildFullName(savedUser))
-                .role(savedUser.getRole()
-                        .name())
+                .role(savedUser.getRole().name())
                 .build();
 
         eventProducer.publishUserRegistered(event);
@@ -77,8 +74,7 @@ public class UserServiceImpl implements UserService {
     }
 
     private String buildFullName(User user) {
-        if (user.getLastName() == null || user.getLastName()
-                .isBlank()) {
+        if (user.getLastName() == null || user.getLastName().isBlank()) {
             return user.getFirstName();
         }
         return user.getFirstName() + " " + user.getLastName();
@@ -88,19 +84,19 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public LoginResponse login(LoginRequest request) {
         User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new UnauthorizedException("Invalid email or password"));
+                .orElseThrow(() -> new UnauthorizedException(AuthMessages.INVALID_CREDENTIALS));
 
         if (user.getAccountLockedAt() != null) {
-            throw new ForbiddenException("Account is locked due to too many failed login attempts. Please reset your password to unlock it.");
+            throw new ForbiddenException(AuthMessages.ACCOUNT_LOCKED);
         }
 
         if (!user.isActive()) {
-            throw new ForbiddenException("Account is deactivated. Please contact support or reactivate your account.");
+            throw new ForbiddenException(AuthMessages.ACCOUNT_DEACTIVATED);
         }
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             loginAttemptService.recordFailedAttempt(user);
-            throw new UnauthorizedException("Invalid email or password");
+            throw new UnauthorizedException(AuthMessages.INVALID_CREDENTIALS);
         }
 
         user.setFailedLoginAttempts(0);
@@ -114,6 +110,37 @@ public class UserServiceImpl implements UserService {
         return LoginResponse.builder()
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
+                .user(userMapper.toResponse(user))
+                .build();
+    }
+
+    @Override
+    public LoginResponse refreshToken(RefreshTokenRequest request) {
+        String token = request.getRefreshToken();
+
+        if (!jwtService.isTokenValid(token)) {
+            throw new UnauthorizedException(AuthMessages.INVALID_REFRESH_TOKEN);
+        }
+
+        Long userId = jwtService.extractUserId(token);
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UnauthorizedException(AuthMessages.INVALID_REFRESH_TOKEN));
+
+        if (!user.isActive()) {
+            throw new ForbiddenException(AuthMessages.ACCOUNT_DEACTIVATED);
+        }
+
+        if (user.getAccountLockedAt() != null) {
+            throw new ForbiddenException(AuthMessages.ACCOUNT_LOCKED);
+        }
+
+        String newAccessToken = jwtService.generateAccessToken(user);
+        String newRefreshToken = jwtService.generateRefreshToken(user);
+
+        return LoginResponse.builder()
+                .accessToken(newAccessToken)
+                .refreshToken(newRefreshToken)
                 .user(userMapper.toResponse(user))
                 .build();
     }

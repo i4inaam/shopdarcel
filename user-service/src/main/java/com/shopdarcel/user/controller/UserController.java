@@ -1,9 +1,6 @@
 package com.shopdarcel.user.controller;
 
-import com.shopdarcel.user.dto.LoginRequest;
-import com.shopdarcel.user.dto.LoginResponse;
-import com.shopdarcel.user.dto.RegisterRequest;
-import com.shopdarcel.user.dto.UserResponse;
+import com.shopdarcel.user.dto.*;
 import com.shopdarcel.user.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -46,6 +43,18 @@ public class UserController {
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
         LoginResponse response = userService.login(request);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Exchanges a valid refresh token for a new access/refresh token pair.
+     *
+     * @param request contains the refresh token
+     * @return new tokens and basic user profile info, with HTTP 200 OK
+     */
+    @PostMapping("/refresh")
+    public ResponseEntity<LoginResponse> refresh(@Valid @RequestBody RefreshTokenRequest request) {
+        LoginResponse response = userService.refreshToken(request);
         return ResponseEntity.ok(response);
     }
 }

@@ -1,9 +1,6 @@
 package com.shopdarcel.user.service;
 
-import com.shopdarcel.user.dto.LoginRequest;
-import com.shopdarcel.user.dto.LoginResponse;
-import com.shopdarcel.user.dto.RegisterRequest;
-import com.shopdarcel.user.dto.UserResponse;
+import com.shopdarcel.user.dto.*;
 
 /**
  * Business logic contract for user account operations.
@@ -35,4 +32,16 @@ public interface UserService {
      * @throws com.shopdarcel.common.exception.ForbiddenException    if the account is locked or deactivated
      */
     LoginResponse login(LoginRequest request);
+
+    /**
+     * Exchanges a valid refresh token for a new access token (and a new,
+     * rotated refresh token). The user's current role is re-fetched from the
+     * database rather than trusted from the old token, in case it changed
+     * since the refresh token was issued.
+     *
+     * @param request contains the refresh token to validate
+     * @return a new token pair and basic user profile info
+     * @throws com.shopdarcel.common.exception.UnauthorizedException if the token is invalid, expired, or the user no longer exists
+     */
+    LoginResponse refreshToken(RefreshTokenRequest request);
 }
