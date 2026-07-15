@@ -10,4 +10,6 @@ public final class AuthMessages {
     public static final String ACCOUNT_LOCKED = "Account is locked due to too many failed login attempts. Please reset your password to unlock it.";
     public static final String ACCOUNT_DEACTIVATED = "Account is deactivated. Please contact support or reactivate your account.";
     public static final String INVALID_REFRESH_TOKEN = "Invalid or expired refresh token";
+    public static final String USER_NOT_FOUND = "User not found";
+    public static final String MISSING_USER_ID_HEADER = "Missing X-User-Id header";
 }

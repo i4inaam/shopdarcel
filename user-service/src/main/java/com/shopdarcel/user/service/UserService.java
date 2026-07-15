@@ -44,4 +44,18 @@ public interface UserService {
      * @throws com.shopdarcel.common.exception.UnauthorizedException if the token is invalid, expired, or the user no longer exists
      */
     LoginResponse refreshToken(RefreshTokenRequest request);
+
+    /**
+     * Fetches the profile of the currently authenticated user.
+     * <p>
+     * Accepts the raw {@code X-User-Id} header value as a string so that
+     * both its absence and any malformed (non-numeric) value can be
+     * validated in one place, alongside the existence check.
+     *
+     * @param userIdHeader the raw value of the {@code X-User-Id} header, normally set by api-gateway after JWT validation
+     * @return the user's public-facing profile
+     * @throws com.shopdarcel.common.exception.UnauthorizedException     if the header is missing, blank, or not a valid numeric ID
+     * @throws com.shopdarcel.common.exception.ResourceNotFoundException if no user exists with this ID
+     */
+    UserResponse getCurrentUser(String userIdHeader);
 }

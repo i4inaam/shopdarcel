@@ -3,6 +3,7 @@ package com.shopdarcel.user.service;
 import com.shopdarcel.common.dto.kafka.UserRegisteredEvent;
 import com.shopdarcel.common.exception.ConflictException;
 import com.shopdarcel.common.exception.ForbiddenException;
+import com.shopdarcel.common.exception.ResourceNotFoundException;
 import com.shopdarcel.common.exception.UnauthorizedException;
 import com.shopdarcel.user.config.CorrelationIdFilter;
 import com.shopdarcel.user.constants.AuthMessages;
@@ -146,5 +147,23 @@ public class UserServiceImpl implements UserService {
                 .refreshToken(newRefreshToken)
                 .user(userMapper.toResponse(user))
                 .build();
+    }
+
+    @Override
+    public UserResponse getCurrentUser(String userIdHeader) {
+        if (userIdHeader == null || userIdHeader.isBlank()) {
+            throw new UnauthorizedException(AuthMessages.MISSING_USER_ID_HEADER);
+        }
+
+        Long userId;
+        try {
+            userId = Long.parseLong(userIdHeader);
+        } catch (NumberFormatException ex) {
+            throw new UnauthorizedException(AuthMessages.MISSING_USER_ID_HEADER);
+        }
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException(AuthMessages.USER_NOT_FOUND));
+        return userMapper.toResponse(user);
     }
 }
