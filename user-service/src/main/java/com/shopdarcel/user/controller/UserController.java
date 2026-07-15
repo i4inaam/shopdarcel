@@ -72,4 +72,20 @@ public class UserController {
         UserResponse response = userService.getCurrentUser(userId);
         return ResponseEntity.ok(response);
     }
+
+    /**
+     * Changes the currently authenticated user's password.
+     *
+     * @param userId  the raw {@code X-User-Id} header value
+     * @param request current and new password
+     * @return HTTP 204 No Content on success
+     */
+    @PutMapping("/me/password")
+    public ResponseEntity<Void> changePassword(
+            @RequestHeader(value = "X-User-Id", required = false) String userId,
+            @Valid @RequestBody ChangePasswordRequest request) {
+        userService.changePassword(userId, request);
+        return ResponseEntity.noContent()
+                .build();
+    }
 }

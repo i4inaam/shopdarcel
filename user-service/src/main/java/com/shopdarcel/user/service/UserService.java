@@ -58,4 +58,19 @@ public interface UserService {
      * @throws com.shopdarcel.common.exception.ResourceNotFoundException if no user exists with this ID
      */
     UserResponse getCurrentUser(String userIdHeader);
+
+    /**
+     * Changes the currently authenticated user's password.
+     * <p>
+     * Requires the correct current password as proof of identity. The new
+     * password must differ from the current one. Updates
+     * {@code passwordChangedAt} for security auditing.
+     *
+     * @param userIdHeader the raw {@code X-User-Id} header value
+     * @param request      current and new password
+     * @throws com.shopdarcel.common.exception.UnauthorizedException     if the header is invalid or the current password is wrong
+     * @throws com.shopdarcel.common.exception.ResourceNotFoundException if no user exists with this ID
+     * @throws com.shopdarcel.common.exception.ConflictException         if the new password matches the current one
+     */
+    void changePassword(String userIdHeader, ChangePasswordRequest request);
 }

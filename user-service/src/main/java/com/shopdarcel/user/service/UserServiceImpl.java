@@ -151,19 +151,41 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserResponse getCurrentUser(String userIdHeader) {
-        if (userIdHeader == null || userIdHeader.isBlank()) {
-            throw new UnauthorizedException(AuthMessages.MISSING_USER_ID_HEADER);
-        }
-
-        Long userId;
-        try {
-            userId = Long.parseLong(userIdHeader);
-        } catch (NumberFormatException ex) {
-            throw new UnauthorizedException(AuthMessages.MISSING_USER_ID_HEADER);
-        }
-
+        Long userId = parseUserIdHeader(userIdHeader);
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException(AuthMessages.USER_NOT_FOUND));
         return userMapper.toResponse(user);
+    }
+
+    @Override
+    @Transactional
+    public void changePassword(String userIdHeader, ChangePasswordRequest request) {
+        Long userId = parseUserIdHeader(userIdHeader);
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException(AuthMessages.USER_NOT_FOUND));
+
+        if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
+            throw new UnauthorizedException(AuthMessages.CURRENT_PASSWORD_INCORRECT);
+        }
+
+        if (passwordEncoder.matches(request.getNewPassword(), user.getPassword())) {
+            throw new ConflictException(AuthMessages.NEW_PASSWORD_SAME_AS_OLD);
+        }
+
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        user.setPasswordChangedAt(Instant.now());
+        userRepository.save(user);
+    }
+
+    private Long parseUserIdHeader(String userIdHeader) {
+        if (userIdHeader == null || userIdHeader.isBlank()) {
+            throw new UnauthorizedException(AuthMessages.MISSING_USER_ID_HEADER);
+        }
+        try {
+            return Long.parseLong(userIdHeader);
+        } catch (NumberFormatException ex) {
+            throw new UnauthorizedException(AuthMessages.MISSING_USER_ID_HEADER);
+        }
     }
 }

@@ -12,4 +12,6 @@ public final class AuthMessages {
     public static final String INVALID_REFRESH_TOKEN = "Invalid or expired refresh token";
     public static final String USER_NOT_FOUND = "User not found";
     public static final String MISSING_USER_ID_HEADER = "Missing X-User-Id header";
+    public static final String CURRENT_PASSWORD_INCORRECT = "Current password is incorrect";
+    public static final String NEW_PASSWORD_SAME_AS_OLD = "New password must be different from current password";
 }
