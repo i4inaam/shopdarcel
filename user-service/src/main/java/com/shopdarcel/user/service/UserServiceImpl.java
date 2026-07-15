@@ -4,6 +4,7 @@ import com.shopdarcel.common.dto.kafka.UserRegisteredEvent;
 import com.shopdarcel.common.exception.ConflictException;
 import com.shopdarcel.common.exception.ForbiddenException;
 import com.shopdarcel.common.exception.UnauthorizedException;
+import com.shopdarcel.user.config.CorrelationIdFilter;
 import com.shopdarcel.user.constants.AuthMessages;
 import com.shopdarcel.user.dto.*;
 import com.shopdarcel.user.entity.User;
@@ -13,6 +14,7 @@ import com.shopdarcel.user.mapper.UserMapper;
 import com.shopdarcel.user.repository.UserRepository;
 import com.shopdarcel.user.security.JwtService;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.MDC;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -62,6 +64,7 @@ public class UserServiceImpl implements UserService {
         UserRegisteredEvent event = UserRegisteredEvent.builder()
                 .eventId(java.util.UUID.randomUUID())
                 .occurredAt(now)
+                .correlationId(MDC.get(CorrelationIdFilter.MDC_KEY))
                 .userId(savedUser.getId())
                 .email(savedUser.getEmail())
                 .fullName(buildFullName(savedUser))
