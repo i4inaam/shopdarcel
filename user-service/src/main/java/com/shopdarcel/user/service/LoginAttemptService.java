@@ -1,8 +1,12 @@
 package com.shopdarcel.user.service;
 
+import com.shopdarcel.common.dto.kafka.AccountLockedEvent;
+import com.shopdarcel.user.config.CorrelationIdFilter;
 import com.shopdarcel.user.entity.User;
+import com.shopdarcel.user.kafka.UserEventProducer;
 import com.shopdarcel.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.MDC;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,8 +28,8 @@ import java.time.Instant;
 public class LoginAttemptService {
 
     private static final int MAX_FAILED_ATTEMPTS = 5;
-
     private final UserRepository userRepository;
+    private final UserEventProducer eventProducer;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void recordFailedAttempt(User user) {
@@ -33,9 +37,21 @@ public class LoginAttemptService {
         user.setFailedLoginAttempts(attempts);
 
         if (attempts >= MAX_FAILED_ATTEMPTS) {
-            user.setAccountLockedAt(Instant.now());
-        }
+            Instant lockedAt = Instant.now();
+            user.setAccountLockedAt(lockedAt);
+            userRepository.save(user);
 
-        userRepository.save(user);
+            AccountLockedEvent event = AccountLockedEvent.builder()
+                    .eventId(java.util.UUID.randomUUID())
+                    .occurredAt(lockedAt)
+                    .correlationId(MDC.get(CorrelationIdFilter.MDC_KEY))
+                    .userId(user.getId())
+                    .email(user.getEmail())
+                    .build();
+
+            eventProducer.publishAccountLocked(event);
+        } else {
+            userRepository.save(user);
+        }
     }
 }
