@@ -58,4 +58,29 @@ public final class KafkaTopics {
      * Published when payment processing for an order succeeds.
      */
     public static final String PAYMENT_SUCCESS = "payment.success";
+
+    /**
+     * Published by user-service when a user successfully changes their password.
+     */
+    public static final String USER_PASSWORD_CHANGED = "user.password.changed";
+
+    /**
+     * Published by user-service when a user requests a password reset.
+     */
+    public static final String USER_PASSWORD_RESET_REQUESTED = "user.password.reset.requested";
+
+    /**
+     * Published by user-service when a user needs to (re)verify their email.
+     */
+    public static final String USER_EMAIL_VERIFICATION_REQUESTED = "user.email.verification.requested";
+
+    /**
+     * Published by user-service when an account is locked after too many failed login attempts.
+     */
+    public static final String USER_ACCOUNT_LOCKED = "user.account.locked";
+
+    /**
+     * Published by user-service when a user deactivates their account.
+     */
+    public static final String USER_ACCOUNT_DEACTIVATED = "user.account.deactivated";
 }
