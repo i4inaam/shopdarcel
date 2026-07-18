@@ -1,5 +1,6 @@
 package com.shopdarcel.user.service;
 
+import com.shopdarcel.common.dto.kafka.PasswordChangedEvent;
 import com.shopdarcel.common.dto.kafka.UserRegisteredEvent;
 import com.shopdarcel.common.exception.ConflictException;
 import com.shopdarcel.common.exception.ForbiddenException;
@@ -176,6 +177,16 @@ public class UserServiceImpl implements UserService {
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
         user.setPasswordChangedAt(Instant.now());
         userRepository.save(user);
+
+        PasswordChangedEvent event = PasswordChangedEvent.builder()
+                .eventId(java.util.UUID.randomUUID())
+                .occurredAt(Instant.now())
+                .correlationId(MDC.get(CorrelationIdFilter.MDC_KEY))
+                .userId(user.getId())
+                .email(user.getEmail())
+                .build();
+
+        eventProducer.publishPasswordChanged(event);
     }
 
     private Long parseUserIdHeader(String userIdHeader) {

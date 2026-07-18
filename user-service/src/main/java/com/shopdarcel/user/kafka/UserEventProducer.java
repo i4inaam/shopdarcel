@@ -1,6 +1,7 @@
 package com.shopdarcel.user.kafka;
 
 import com.shopdarcel.common.constants.KafkaTopics;
+import com.shopdarcel.common.dto.kafka.PasswordChangedEvent;
 import com.shopdarcel.common.dto.kafka.UserRegisteredEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -39,6 +40,22 @@ public class UserEventProducer {
                     });
         } catch (Exception ex) {
             log.error("Unexpected error publishing user.registered event for userId={}", event.getUserId(), ex);
+        }
+    }
+
+    public void publishPasswordChanged(PasswordChangedEvent event) {
+        try {
+            kafkaTemplate.send(KafkaTopics.USER_PASSWORD_CHANGED, event.getUserId()
+                            .toString(), event)
+                    .whenComplete((result, ex) -> {
+                        if (ex != null) {
+                            log.error("Failed to publish user.password.changed event for userId={}", event.getUserId(), ex);
+                        } else {
+                            log.info("Published user.password.changed event for userId={}", event.getUserId());
+                        }
+                    });
+        } catch (Exception ex) {
+            log.error("Unexpected error publishing user.password.changed event for userId={}", event.getUserId(), ex);
         }
     }
 }
