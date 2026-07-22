@@ -99,4 +99,17 @@ public class User extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "role", nullable = false)
     private UserRole role;
+
+    /**
+     * Optional. Just the year, e.g. 1990 — used for personalized product suggestions.
+     */
+    @Column(name = "birth_year")
+    private Integer birthYear;
+
+    /**
+     * Optional. Provided at registration or updated later via profile settings.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "gender")
+    private Gender gender;
 }
