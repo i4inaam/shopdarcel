@@ -1,5 +1,6 @@
 package com.shopdarcel.user.dto;
 
+import com.shopdarcel.user.entity.Gender;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -39,6 +40,10 @@ public class RegisterRequest {
      */
     @Pattern(regexp = "^[\\p{L} '-]*$", message = "Last name can only contain letters, spaces, hyphens, and apostrophes")
     private String lastName;
+
+    private Integer birthYear;
+
+    private Gender gender;
 
     /**
      * Must be {@code true} for registration to succeed — users must

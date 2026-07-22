@@ -73,4 +73,16 @@ public interface UserService {
      * @throws com.shopdarcel.common.exception.ConflictException         if the new password matches the current one
      */
     void changePassword(String userIdHeader, ChangePasswordRequest request);
+
+    /**
+     * Updates the currently authenticated user's profile. Only non-null
+     * fields in the request are applied — omitted fields remain unchanged.
+     *
+     * @param userIdHeader the raw {@code X-User-Id} header value
+     * @param request      fields to update; null fields are left unchanged
+     * @return the updated user profile
+     * @throws com.shopdarcel.common.exception.UnauthorizedException     if the header is invalid
+     * @throws com.shopdarcel.common.exception.ResourceNotFoundException if no user exists with this ID
+     */
+    UserResponse updateProfile(String userIdHeader, UpdateProfileRequest request);
 }

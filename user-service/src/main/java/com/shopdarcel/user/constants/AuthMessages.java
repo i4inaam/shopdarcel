@@ -14,4 +14,5 @@ public final class AuthMessages {
     public static final String MISSING_USER_ID_HEADER = "Missing X-User-Id header";
     public static final String CURRENT_PASSWORD_INCORRECT = "Current password is incorrect";
     public static final String NEW_PASSWORD_SAME_AS_OLD = "New password must be different from current password";
+    public static final String BIRTH_YEAR_INCORRECT = "Birth year must be between 1900 and ";
 }

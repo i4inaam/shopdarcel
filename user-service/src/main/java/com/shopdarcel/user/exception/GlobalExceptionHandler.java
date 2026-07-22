@@ -1,9 +1,6 @@
 package com.shopdarcel.user.exception;
 
-import com.shopdarcel.common.exception.ConflictException;
-import com.shopdarcel.common.exception.ForbiddenException;
-import com.shopdarcel.common.exception.ResourceNotFoundException;
-import com.shopdarcel.common.exception.UnauthorizedException;
+import com.shopdarcel.common.exception.*;
 import com.shopdarcel.common.response.ApiError;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
@@ -106,6 +103,18 @@ public class GlobalExceptionHandler {
                 .path(request.getRequestURI())
                 .build();
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(error);
+    }
+
+    @ExceptionHandler(ValidationException.class)
+    public ResponseEntity<ApiError> handleValidation(ValidationException ex, HttpServletRequest request) {
+        ApiError error = ApiError.builder()
+                .status(HttpStatus.BAD_REQUEST.value())
+                .error("VALIDATION_FAILED")
+                .message(ex.getMessage())
+                .path(request.getRequestURI())
+                .build();
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(error);
     }
 }

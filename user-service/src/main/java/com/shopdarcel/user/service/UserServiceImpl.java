@@ -2,10 +2,7 @@ package com.shopdarcel.user.service;
 
 import com.shopdarcel.common.dto.kafka.PasswordChangedEvent;
 import com.shopdarcel.common.dto.kafka.UserRegisteredEvent;
-import com.shopdarcel.common.exception.ConflictException;
-import com.shopdarcel.common.exception.ForbiddenException;
-import com.shopdarcel.common.exception.ResourceNotFoundException;
-import com.shopdarcel.common.exception.UnauthorizedException;
+import com.shopdarcel.common.exception.*;
 import com.shopdarcel.user.config.CorrelationIdFilter;
 import com.shopdarcel.user.constants.AuthMessages;
 import com.shopdarcel.user.dto.*;
@@ -22,6 +19,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.time.Year;
+import java.util.UUID;
 
 /**
  * Default implementation of {@link UserService}.
@@ -50,12 +49,15 @@ public class UserServiceImpl implements UserService {
         }
 
         Instant now = Instant.now();
+        validateBirthYear(request.getBirthYear());
 
         User user = User.builder()
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
+                .birthYear(request.getBirthYear())
+                .gender(request.getGender())
                 .termsAcceptedAt(now)
                 .passwordChangedAt(now)
                 .role(UserRole.ROLE_USER)
@@ -64,7 +66,7 @@ public class UserServiceImpl implements UserService {
         User savedUser = userRepository.save(user);
 
         UserRegisteredEvent event = UserRegisteredEvent.builder()
-                .eventId(java.util.UUID.randomUUID())
+                .eventId(UUID.randomUUID())
                 .occurredAt(now)
                 .correlationId(MDC.get(CorrelationIdFilter.MDC_KEY))
                 .userId(savedUser.getId())
@@ -179,7 +181,7 @@ public class UserServiceImpl implements UserService {
         userRepository.save(user);
 
         PasswordChangedEvent event = PasswordChangedEvent.builder()
-                .eventId(java.util.UUID.randomUUID())
+                .eventId(UUID.randomUUID())
                 .occurredAt(Instant.now())
                 .correlationId(MDC.get(CorrelationIdFilter.MDC_KEY))
                 .userId(user.getId())
@@ -187,6 +189,32 @@ public class UserServiceImpl implements UserService {
                 .build();
 
         eventProducer.publishPasswordChanged(event);
+    }
+
+    @Override
+    @Transactional
+    public UserResponse updateProfile(String userIdHeader, UpdateProfileRequest request) {
+        Long userId = parseUserIdHeader(userIdHeader);
+        validateBirthYear(request.getBirthYear());
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException(AuthMessages.USER_NOT_FOUND));
+
+        if (request.getFirstName() != null) {
+            user.setFirstName(request.getFirstName());
+        }
+        if (request.getLastName() != null) {
+            user.setLastName(request.getLastName());
+        }
+        if (request.getBirthYear() != null) {
+            user.setBirthYear(request.getBirthYear());
+        }
+        if (request.getGender() != null) {
+            user.setGender(request.getGender());
+        }
+
+        User savedUser = userRepository.save(user);
+        return userMapper.toResponse(savedUser);
     }
 
     private Long parseUserIdHeader(String userIdHeader) {
@@ -197,6 +225,16 @@ public class UserServiceImpl implements UserService {
             return Long.parseLong(userIdHeader);
         } catch (NumberFormatException ex) {
             throw new UnauthorizedException(AuthMessages.MISSING_USER_ID_HEADER);
+        }
+    }
+
+    private void validateBirthYear(Integer birthYear) {
+        if (birthYear == null) {
+            return;
+        }
+        int currentYear = Year.now().getValue();
+        if (birthYear < 1900 || birthYear > currentYear) {
+            throw new ValidationException(AuthMessages.BIRTH_YEAR_INCORRECT + currentYear);
         }
     }
 }

@@ -1,5 +1,6 @@
 package com.shopdarcel.user.dto;
 
+import com.shopdarcel.user.entity.Gender;
 import com.shopdarcel.user.entity.UserRole;
 import lombok.*;
 
@@ -24,6 +25,8 @@ public class UserResponse {
     private String email;
     private String firstName;
     private String lastName;
+    private Integer birthYear;
+    private Gender gender;
     private boolean active;
     private boolean emailVerified;
     private UserRole role;

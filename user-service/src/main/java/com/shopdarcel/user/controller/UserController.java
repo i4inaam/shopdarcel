@@ -88,4 +88,20 @@ public class UserController {
         return ResponseEntity.noContent()
                 .build();
     }
+
+    /**
+     * Updates the currently authenticated user's profile. Only non-null
+     * fields in the request body are applied.
+     *
+     * @param userId  the raw {@code X-User-Id} header value
+     * @param request fields to update
+     * @return the updated profile, with HTTP 200 OK
+     */
+    @PutMapping("/me")
+    public ResponseEntity<UserResponse> updateProfile(
+            @RequestHeader(value = "X-User-Id", required = false) String userId,
+            @Valid @RequestBody UpdateProfileRequest request) {
+        UserResponse response = userService.updateProfile(userId, request);
+        return ResponseEntity.ok(response);
+    }
 }
