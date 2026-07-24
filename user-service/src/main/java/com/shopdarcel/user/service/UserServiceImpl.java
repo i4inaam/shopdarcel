@@ -1,5 +1,6 @@
 package com.shopdarcel.user.service;
 
+import com.shopdarcel.common.dto.kafka.EmailVerificationRequestedEvent;
 import com.shopdarcel.common.dto.kafka.PasswordChangedEvent;
 import com.shopdarcel.common.dto.kafka.PasswordResetRequestedEvent;
 import com.shopdarcel.common.dto.kafka.UserRegisteredEvent;
@@ -21,9 +22,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.Year;
+import java.util.Base64;
 import java.util.UUID;
 
 /**
@@ -80,6 +83,7 @@ public class UserServiceImpl implements UserService {
                 .build();
 
         eventProducer.publishUserRegistered(event);
+        issueEmailVerificationToken(savedUser);
 
         return userMapper.toResponse(savedUser);
     }
@@ -277,8 +281,7 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findByResetTokenHash(tokenHash)
                 .orElseThrow(() -> new UnauthorizedException(AuthMessages.INVALID_EXPIRED_RESET_TOKEN));
 
-        if (user.getResetTokenExpiresAt() == null || user.getResetTokenExpiresAt()
-                .isBefore(Instant.now())) {
+        if (user.getResetTokenExpiresAt() == null || user.getResetTokenExpiresAt().isBefore(Instant.now())) {
             throw new UnauthorizedException(AuthMessages.INVALID_EXPIRED_RESET_TOKEN);
         }
 
@@ -305,9 +308,59 @@ public class UserServiceImpl implements UserService {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             byte[] hash = digest.digest(rawToken.getBytes(StandardCharsets.UTF_8));
-            return java.util.Base64.getEncoder().encodeToString(hash);
-        } catch (java.security.NoSuchAlgorithmException ex) {
+            return Base64.getEncoder().encodeToString(hash);
+        } catch (NoSuchAlgorithmException ex) {
             throw new IllegalStateException(AuthMessages.INVALID_ALGO, ex);
         }
+    }
+
+    @Override
+    @Transactional
+    public void verifyEmail(VerifyEmailRequest request) {
+        String tokenHash = hashToken(request.getToken());
+
+        User user = userRepository.findByEmailTokenHash(tokenHash)
+                .orElseThrow(() -> new UnauthorizedException(AuthMessages.INVALID_EXPIRED_VERIFICATION_TOKEN));
+
+        if (user.getEmailTokenExpiresAt() == null || user.getEmailTokenExpiresAt()
+                .isBefore(Instant.now())) {
+            throw new UnauthorizedException(AuthMessages.INVALID_EXPIRED_VERIFICATION_TOKEN);
+        }
+
+        user.setEmailVerified(true);
+        user.setEmailTokenHash(null);
+        user.setEmailTokenExpiresAt(null);
+        userRepository.save(user);
+    }
+
+    @Override
+    @Transactional
+    public void resendVerification(ResendVerificationRequest request) {
+        userRepository.findByEmail(request.getEmail())
+                .filter(user -> !user.isEmailVerified())
+                .ifPresent(this::issueEmailVerificationToken);
+    }
+
+    private void issueEmailVerificationToken(User user) {
+        String rawToken = UUID.randomUUID().toString();
+        String tokenHash = hashToken(rawToken);
+        Instant expiresAt = Instant.now()
+                .plus(Duration.ofHours(24));
+
+        user.setEmailTokenHash(tokenHash);
+        user.setEmailTokenExpiresAt(expiresAt);
+        userRepository.save(user);
+
+        EmailVerificationRequestedEvent event = EmailVerificationRequestedEvent.builder()
+                .eventId(UUID.randomUUID())
+                .occurredAt(Instant.now())
+                .correlationId(MDC.get(CorrelationIdFilter.MDC_KEY))
+                .userId(user.getId())
+                .email(user.getEmail())
+                .verificationToken(rawToken)
+                .expiresAt(expiresAt)
+                .build();
+
+        eventProducer.publishEmailVerificationRequested(event);
     }
 }

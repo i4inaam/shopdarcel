@@ -57,4 +57,16 @@ public interface UserRepository extends JpaRepository<User, Long> {
      * @return an {@link Optional} containing the matching user, or empty if none exists
      */
     Optional<User> findByResetTokenHash(String resetTokenHash);
+
+    /**
+     * Finds a user by their email-verification token hash.
+     * <p>
+     * Used during email verification — the incoming plaintext token is
+     * hashed with SHA-256 before this lookup, same pattern as password
+     * reset token lookup.
+     *
+     * @param emailTokenHash the SHA-256 hash of the verification token
+     * @return an {@link Optional} containing the matching user, or empty if none exists
+     */
+    Optional<User> findByEmailTokenHash(String emailTokenHash);
 }

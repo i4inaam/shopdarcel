@@ -124,4 +124,16 @@ public class User extends BaseEntity {
      */
     @Column(name = "reset_token_expires_at")
     private Instant resetTokenExpiresAt;
+
+    /**
+     * Hash of the current email-verification token, if verification is pending. Null otherwise.
+     */
+    @Column(name = "email_token_hash")
+    private String emailTokenHash;
+
+    /**
+     * Expiry of the current email-verification token. Null if none is pending.
+     */
+    @Column(name = "email_token_expires_at")
+    private Instant emailTokenExpiresAt;
 }

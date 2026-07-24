@@ -19,4 +19,8 @@ public final class AuthMessages {
     public static final String INVALID_EXPIRED_RESET_TOKEN = "Invalid or expired reset token";
     public static final String PASSWORD_RESET_SUCCESS = "Password reset successful. Please log in with your new password.";
     public static final String INVALID_ALGO = "SHA-256 algorithm not available";
+    public static final String EMAIL_ALREADY_VERIFIED = "Email is already verified";
+    public static final String INVALID_EXPIRED_VERIFICATION_TOKEN = "Invalid or expired email verification token";
+    public static final String EMAIL_VERIFICATION_SUCCESS = "Email verified successfully";
+    public static final String VERIFICATION_EMAIL_SENT = "If an account with that email exists and is unverified, a verification link has been sent";
 }

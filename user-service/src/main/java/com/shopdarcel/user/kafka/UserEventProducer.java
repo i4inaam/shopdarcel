@@ -1,10 +1,7 @@
 package com.shopdarcel.user.kafka;
 
 import com.shopdarcel.common.constants.KafkaTopics;
-import com.shopdarcel.common.dto.kafka.AccountLockedEvent;
-import com.shopdarcel.common.dto.kafka.PasswordChangedEvent;
-import com.shopdarcel.common.dto.kafka.PasswordResetRequestedEvent;
-import com.shopdarcel.common.dto.kafka.UserRegisteredEvent;
+import com.shopdarcel.common.dto.kafka.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -90,6 +87,22 @@ public class UserEventProducer {
                     });
         } catch (Exception ex) {
             log.error("Unexpected error publishing user.password.reset.requested event for userId={}", event.getUserId(), ex);
+        }
+    }
+
+    public void publishEmailVerificationRequested(EmailVerificationRequestedEvent event) {
+        try {
+            kafkaTemplate.send(KafkaTopics.USER_EMAIL_VERIFICATION_REQUESTED, event.getUserId()
+                            .toString(), event)
+                    .whenComplete((result, ex) -> {
+                        if (ex != null) {
+                            log.error("Failed to publish user.email.verification.requested event for userId={}", event.getUserId(), ex);
+                        } else {
+                            log.info("Published user.email.verification.requested event for userId={}", event.getUserId());
+                        }
+                    });
+        } catch (Exception ex) {
+            log.error("Unexpected error publishing user.email.verification.requested event for userId={}", event.getUserId(), ex);
         }
     }
 }

@@ -141,4 +141,30 @@ public class UserController {
         userService.resetPassword(request);
         return ResponseEntity.ok(Map.of("message", AuthMessages.PASSWORD_RESET_SUCCESS));
     }
+
+    /**
+     * Verifies a user's email using a valid, unexpired verification token.
+     *
+     * @param request the verification token
+     * @return HTTP 200 OK with a confirmation message
+     */
+    @PostMapping("/verify-email")
+    public ResponseEntity<Map<String, String>> verifyEmail(@Valid @RequestBody VerifyEmailRequest request) {
+        userService.verifyEmail(request);
+        return ResponseEntity.ok(Map.of("message", AuthMessages.EMAIL_VERIFICATION_SUCCESS));
+    }
+
+    /**
+     * Resends a verification email, if an account exists for this email and
+     * isn't already verified. Always returns the same generic response.
+     *
+     * @param request the email to resend verification to
+     * @return HTTP 200 OK with a generic message, always
+     */
+    @PostMapping("/resend-verification")
+    public ResponseEntity<Map<String, String>> resendVerification(
+            @Valid @RequestBody ResendVerificationRequest request) {
+        userService.resendVerification(request);
+        return ResponseEntity.ok(Map.of("message", AuthMessages.VERIFICATION_EMAIL_SENT));
+    }
 }

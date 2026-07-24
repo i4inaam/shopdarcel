@@ -98,4 +98,21 @@ public interface UserService {
      * ownership of the account.
      */
     void resetPassword(ResetPasswordRequest request);
+
+    /**
+     * Verifies a user's email using a valid, unexpired verification token.
+     *
+     * @param request the verification token
+     * @throws com.shopdarcel.common.exception.UnauthorizedException if the token doesn't match any user or has expired
+     */
+    void verifyEmail(VerifyEmailRequest request);
+
+    /**
+     * Resends a verification email for the given address, if an account
+     * exists and isn't already verified. Behaves identically regardless of
+     * whether the email exists, to avoid revealing registered emails.
+     *
+     * @param request the email to resend verification to
+     */
+    void resendVerification(ResendVerificationRequest request);
 }
