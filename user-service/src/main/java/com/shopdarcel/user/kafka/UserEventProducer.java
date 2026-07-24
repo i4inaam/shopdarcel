@@ -3,6 +3,7 @@ package com.shopdarcel.user.kafka;
 import com.shopdarcel.common.constants.KafkaTopics;
 import com.shopdarcel.common.dto.kafka.AccountLockedEvent;
 import com.shopdarcel.common.dto.kafka.PasswordChangedEvent;
+import com.shopdarcel.common.dto.kafka.PasswordResetRequestedEvent;
 import com.shopdarcel.common.dto.kafka.UserRegisteredEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -73,6 +74,22 @@ public class UserEventProducer {
                     });
         } catch (Exception ex) {
             log.error("Unexpected error publishing user.account.locked event for userId={}", event.getUserId(), ex);
+        }
+    }
+
+    public void publishPasswordResetRequested(PasswordResetRequestedEvent event) {
+        try {
+            kafkaTemplate.send(KafkaTopics.USER_PASSWORD_RESET_REQUESTED, event.getUserId()
+                            .toString(), event)
+                    .whenComplete((result, ex) -> {
+                        if (ex != null) {
+                            log.error("Failed to publish user.password.reset.requested event for userId={}", event.getUserId(), ex);
+                        } else {
+                            log.info("Published user.password.reset.requested event for userId={}", event.getUserId());
+                        }
+                    });
+        } catch (Exception ex) {
+            log.error("Unexpected error publishing user.password.reset.requested event for userId={}", event.getUserId(), ex);
         }
     }
 }

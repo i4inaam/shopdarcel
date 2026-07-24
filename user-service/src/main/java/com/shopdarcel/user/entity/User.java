@@ -112,4 +112,16 @@ public class User extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "gender")
     private Gender gender;
+
+    /**
+     * Hash of the current password-reset token, if a reset is in progress. Null otherwise.
+     */
+    @Column(name = "reset_token_hash")
+    private String resetTokenHash;
+
+    /**
+     * Expiry of the current password-reset token. Null if no reset is in progress.
+     */
+    @Column(name = "reset_token_expires_at")
+    private Instant resetTokenExpiresAt;
 }

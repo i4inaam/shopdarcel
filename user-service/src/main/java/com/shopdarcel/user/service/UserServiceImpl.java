@@ -1,6 +1,7 @@
 package com.shopdarcel.user.service;
 
 import com.shopdarcel.common.dto.kafka.PasswordChangedEvent;
+import com.shopdarcel.common.dto.kafka.PasswordResetRequestedEvent;
 import com.shopdarcel.common.dto.kafka.UserRegisteredEvent;
 import com.shopdarcel.common.exception.*;
 import com.shopdarcel.user.config.CorrelationIdFilter;
@@ -18,6 +19,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.Year;
 import java.util.UUID;
@@ -235,6 +239,75 @@ public class UserServiceImpl implements UserService {
         int currentYear = Year.now().getValue();
         if (birthYear < 1900 || birthYear > currentYear) {
             throw new ValidationException(AuthMessages.BIRTH_YEAR_INCORRECT + currentYear);
+        }
+    }
+
+    @Override
+    @Transactional
+    public void forgotPassword(ForgotPasswordRequest request) {
+        userRepository.findByEmail(request.getEmail())
+                .ifPresent(user -> {
+                    String rawToken = UUID.randomUUID().toString();
+                    String tokenHash = hashToken(rawToken);
+                    Instant expiresAt = Instant.now().plus(Duration.ofMinutes(30));
+
+                    user.setResetTokenHash(tokenHash);
+                    user.setResetTokenExpiresAt(expiresAt);
+                    userRepository.save(user);
+
+                    PasswordResetRequestedEvent event = PasswordResetRequestedEvent.builder()
+                            .eventId(UUID.randomUUID())
+                            .occurredAt(Instant.now())
+                            .correlationId(MDC.get(CorrelationIdFilter.MDC_KEY))
+                            .userId(user.getId())
+                            .email(user.getEmail())
+                            .resetToken(rawToken)
+                            .expiresAt(expiresAt)
+                            .build();
+
+                    eventProducer.publishPasswordResetRequested(event);
+                });
+    }
+
+    @Override
+    @Transactional
+    public void resetPassword(ResetPasswordRequest request) {
+        String tokenHash = hashToken(request.getToken());
+
+        User user = userRepository.findByResetTokenHash(tokenHash)
+                .orElseThrow(() -> new UnauthorizedException(AuthMessages.INVALID_EXPIRED_RESET_TOKEN));
+
+        if (user.getResetTokenExpiresAt() == null || user.getResetTokenExpiresAt()
+                .isBefore(Instant.now())) {
+            throw new UnauthorizedException(AuthMessages.INVALID_EXPIRED_RESET_TOKEN);
+        }
+
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        user.setPasswordChangedAt(Instant.now());
+        user.setResetTokenHash(null);
+        user.setResetTokenExpiresAt(null);
+        user.setFailedLoginAttempts(0);
+        user.setAccountLockedAt(null);
+        userRepository.save(user);
+
+        PasswordChangedEvent event = PasswordChangedEvent.builder()
+                .eventId(UUID.randomUUID())
+                .occurredAt(Instant.now())
+                .correlationId(MDC.get(CorrelationIdFilter.MDC_KEY))
+                .userId(user.getId())
+                .email(user.getEmail())
+                .build();
+
+        eventProducer.publishPasswordChanged(event);
+    }
+
+    private String hashToken(String rawToken) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(rawToken.getBytes(StandardCharsets.UTF_8));
+            return java.util.Base64.getEncoder().encodeToString(hash);
+        } catch (java.security.NoSuchAlgorithmException ex) {
+            throw new IllegalStateException(AuthMessages.INVALID_ALGO, ex);
         }
     }
 }

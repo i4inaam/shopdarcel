@@ -15,4 +15,8 @@ public final class AuthMessages {
     public static final String CURRENT_PASSWORD_INCORRECT = "Current password is incorrect";
     public static final String NEW_PASSWORD_SAME_AS_OLD = "New password must be different from current password";
     public static final String BIRTH_YEAR_INCORRECT = "Birth year must be between 1900 and ";
+    public static final String PASSWORD_RESET_GENERIC_SUCCESS = "If an account with that email exists, a password reset link has been sent.";
+    public static final String INVALID_EXPIRED_RESET_TOKEN = "Invalid or expired reset token";
+    public static final String PASSWORD_RESET_SUCCESS = "Password reset successful. Please log in with your new password.";
+    public static final String INVALID_ALGO = "SHA-256 algorithm not available";
 }

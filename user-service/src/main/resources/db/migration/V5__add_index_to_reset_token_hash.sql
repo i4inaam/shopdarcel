@@ -1,0 +1,1 @@
+CREATE INDEX idx_users_reset_token_hash ON users (reset_token_hash);

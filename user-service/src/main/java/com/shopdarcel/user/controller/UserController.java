@@ -1,5 +1,6 @@
 package com.shopdarcel.user.controller;
 
+import com.shopdarcel.user.constants.AuthMessages;
 import com.shopdarcel.user.dto.*;
 import com.shopdarcel.user.service.UserService;
 import jakarta.validation.Valid;
@@ -7,6 +8,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 /**
  * REST endpoints for user account operations.
@@ -103,5 +106,39 @@ public class UserController {
             @Valid @RequestBody UpdateProfileRequest request) {
         UserResponse response = userService.updateProfile(userId, request);
         return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Initiates a password reset for the given email, if an account exists.
+     * <p>
+     * Always returns the same generic success response regardless of whether
+     * the email is registered, to avoid revealing which emails exist in the
+     * system. The actual reset link is delivered by notification-service via
+     * the {@code user.password.reset.requested} Kafka event.
+     *
+     * @param request the email to send a reset link to
+     * @return HTTP 200 OK with a generic message, always
+     */
+    @PostMapping("/forgot-password")
+    public ResponseEntity<Map<String, String>> forgotPassword(
+            @Valid @RequestBody ForgotPasswordRequest request) {
+        userService.forgotPassword(request);
+        return ResponseEntity.ok(Map.of("message", AuthMessages.PASSWORD_RESET_GENERIC_SUCCESS));
+    }
+
+    /**
+     * Completes a password reset using a valid, unexpired reset token.
+     * <p>
+     * On success, clears any existing account lockout, since successfully
+     * presenting the reset token proves ownership of the account.
+     *
+     * @param request the reset token and new password
+     * @return HTTP 200 OK with a confirmation message
+     */
+    @PostMapping("/reset-password")
+    public ResponseEntity<Map<String, String>> resetPassword(
+            @Valid @RequestBody ResetPasswordRequest request) {
+        userService.resetPassword(request);
+        return ResponseEntity.ok(Map.of("message", AuthMessages.PASSWORD_RESET_SUCCESS));
     }
 }

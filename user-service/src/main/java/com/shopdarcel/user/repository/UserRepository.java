@@ -45,4 +45,16 @@ public interface UserRepository extends JpaRepository<User, Long> {
      * @return {@code true} if a user with this email exists, {@code false} otherwise
      */
     boolean existsByEmail(String email);
+
+    /**
+     * Finds a user by their password-reset token hash.
+     * <p>
+     * Used during password reset — the incoming plaintext token is hashed
+     * with SHA-256 (fast, deterministic) before this lookup, allowing a
+     * direct indexed query rather than scanning every user's stored hash.
+     *
+     * @param resetTokenHash the SHA-256 hash of the reset token
+     * @return an {@link Optional} containing the matching user, or empty if none exists
+     */
+    Optional<User> findByResetTokenHash(String resetTokenHash);
 }

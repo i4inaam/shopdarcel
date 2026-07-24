@@ -85,4 +85,17 @@ public interface UserService {
      * @throws com.shopdarcel.common.exception.ResourceNotFoundException if no user exists with this ID
      */
     UserResponse updateProfile(String userIdHeader, UpdateProfileRequest request);
+
+    /**
+     * Initiates a password reset. Always behaves identically whether or not
+     * the email exists, to avoid revealing which emails are registered.
+     */
+    void forgotPassword(ForgotPasswordRequest request);
+
+    /**
+     * Completes a password reset using a valid, unexpired reset token.
+     * Also clears any account lockout, since a successful reset proves
+     * ownership of the account.
+     */
+    void resetPassword(ResetPasswordRequest request);
 }
