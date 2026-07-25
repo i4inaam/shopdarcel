@@ -1,4 +1,4 @@
-package com.shopdarcel.user.dto;
+package com.shopdarcel.user.dto.address;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
@@ -9,9 +9,6 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class AddressRequest {
-
-    @NotBlank(message = "Recipient name is required")
-    private String recipientName;
 
     @NotBlank(message = "Address line 1 is required")
     private String line1;

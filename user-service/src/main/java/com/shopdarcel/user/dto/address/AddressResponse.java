@@ -1,4 +1,4 @@
-package com.shopdarcel.user.dto;
+package com.shopdarcel.user.dto.address;
 
 import lombok.*;
 
