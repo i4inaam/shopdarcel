@@ -105,4 +105,20 @@ public class UserEventProducer {
             log.error("Unexpected error publishing user.email.verification.requested event for userId={}", event.getUserId(), ex);
         }
     }
+
+    public void publishAccountDeactivated(AccountDeactivatedEvent event) {
+        try {
+            kafkaTemplate.send(KafkaTopics.USER_ACCOUNT_DEACTIVATED, event.getUserId()
+                            .toString(), event)
+                    .whenComplete((result, ex) -> {
+                        if (ex != null) {
+                            log.error("Failed to publish user.account.deactivated event for userId={}", event.getUserId(), ex);
+                        } else {
+                            log.info("Published user.account.deactivated event for userId={}", event.getUserId());
+                        }
+                    });
+        } catch (Exception ex) {
+            log.error("Unexpected error publishing user.account.deactivated event for userId={}", event.getUserId(), ex);
+        }
+    }
 }

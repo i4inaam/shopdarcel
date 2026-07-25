@@ -23,4 +23,7 @@ public final class AuthMessages {
     public static final String INVALID_EXPIRED_VERIFICATION_TOKEN = "Invalid or expired email verification token";
     public static final String EMAIL_VERIFICATION_SUCCESS = "Email verified successfully";
     public static final String VERIFICATION_EMAIL_SENT = "If an account with that email exists and is unverified, a verification link has been sent";
+    public static final String ACCOUNT_DEACTIVATION_SUCCESS = "Account deactivated successfully";
+    public static final String ACCOUNT_ALREADY_ACTIVE = "Account is already active";
+    public static final String ACCOUNT_REACTIVATION_SUCCESS = "Account reactivated successfully";
 }

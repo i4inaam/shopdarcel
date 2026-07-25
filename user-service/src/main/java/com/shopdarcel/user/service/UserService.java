@@ -115,4 +115,31 @@ public interface UserService {
      * @param request the email to resend verification to
      */
     void resendVerification(ResendVerificationRequest request);
+
+    /**
+     * Deactivates the currently authenticated user's account.
+     * <p>
+     * Sets {@code isActive} to {@code false} and publishes an
+     * {@code AccountDeactivatedEvent} — per architecture, clearing the
+     * user's Redis cart is cart-service's responsibility, done by consuming
+     * this event, not something user-service does directly.
+     *
+     * @param userIdHeader the raw {@code X-User-Id} header value
+     * @throws com.shopdarcel.common.exception.UnauthorizedException     if the header is invalid
+     * @throws com.shopdarcel.common.exception.ResourceNotFoundException if no user exists with this ID
+     */
+    void deactivateAccount(String userIdHeader);
+
+    /**
+     * Reactivates a deactivated account, verifying identity via email and
+     * password directly (since a deactivated account cannot use the normal
+     * login flow, which blocks inactive accounts before checking credentials).
+     * On success, immediately issues fresh tokens, matching normal login.
+     *
+     * @param request email and password
+     * @return tokens and profile info, same shape as a normal login
+     * @throws com.shopdarcel.common.exception.UnauthorizedException if credentials are invalid
+     * @throws com.shopdarcel.common.exception.ConflictException     if the account is already active
+     */
+    LoginResponse reactivateAccount(LoginRequest request);
 }

@@ -149,7 +149,8 @@ public class UserController {
      * @return HTTP 200 OK with a confirmation message
      */
     @PostMapping("/verify-email")
-    public ResponseEntity<Map<String, String>> verifyEmail(@Valid @RequestBody VerifyEmailRequest request) {
+    public ResponseEntity<Map<String, String>> verifyEmail(
+            @Valid @RequestBody VerifyEmailRequest request) {
         userService.verifyEmail(request);
         return ResponseEntity.ok(Map.of("message", AuthMessages.EMAIL_VERIFICATION_SUCCESS));
     }
@@ -166,5 +167,31 @@ public class UserController {
             @Valid @RequestBody ResendVerificationRequest request) {
         userService.resendVerification(request);
         return ResponseEntity.ok(Map.of("message", AuthMessages.VERIFICATION_EMAIL_SENT));
+    }
+
+    /**
+     * Deactivates the currently authenticated user's account.
+     *
+     * @param userId the raw {@code X-User-Id} header value
+     * @return HTTP 200 OK with a confirmation message
+     */
+    @PostMapping("/me/deactivate")
+    public ResponseEntity<Map<String, String>> deactivateAccount(
+            @RequestHeader(value = "X-User-Id", required = false) String userId) {
+        userService.deactivateAccount(userId);
+        return ResponseEntity.ok(Map.of("message", AuthMessages.ACCOUNT_DEACTIVATION_SUCCESS));
+    }
+
+    /**
+     * Reactivates a deactivated account using email and password, since
+     * normal login blocks deactivated accounts before checking credentials.
+     *
+     * @param request email and password
+     * @return tokens and profile info, with HTTP 200 OK
+     */
+    @PostMapping("/reactivate")
+    public ResponseEntity<LoginResponse> reactivateAccount(@Valid @RequestBody LoginRequest request) {
+        LoginResponse response = userService.reactivateAccount(request);
+        return ResponseEntity.ok(response);
     }
 }

@@ -1,9 +1,6 @@
 package com.shopdarcel.user.service;
 
-import com.shopdarcel.common.dto.kafka.EmailVerificationRequestedEvent;
-import com.shopdarcel.common.dto.kafka.PasswordChangedEvent;
-import com.shopdarcel.common.dto.kafka.PasswordResetRequestedEvent;
-import com.shopdarcel.common.dto.kafka.UserRegisteredEvent;
+import com.shopdarcel.common.dto.kafka.*;
 import com.shopdarcel.common.exception.*;
 import com.shopdarcel.user.config.CorrelationIdFilter;
 import com.shopdarcel.user.constants.AuthMessages;
@@ -119,14 +116,7 @@ public class UserServiceImpl implements UserService {
         user.setLastLoginAt(Instant.now());
         userRepository.save(user);
 
-        String accessToken = jwtService.generateAccessToken(user);
-        String refreshToken = jwtService.generateRefreshToken(user);
-
-        return LoginResponse.builder()
-                .accessToken(accessToken)
-                .refreshToken(refreshToken)
-                .user(userMapper.toResponse(user))
-                .build();
+        return buildLoginResponse(user);
     }
 
     @Override
@@ -138,7 +128,6 @@ public class UserServiceImpl implements UserService {
         }
 
         Long userId = jwtService.extractUserId(token);
-
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UnauthorizedException(AuthMessages.INVALID_REFRESH_TOKEN));
 
@@ -150,14 +139,7 @@ public class UserServiceImpl implements UserService {
             throw new ForbiddenException(AuthMessages.ACCOUNT_LOCKED);
         }
 
-        String newAccessToken = jwtService.generateAccessToken(user);
-        String newRefreshToken = jwtService.generateRefreshToken(user);
-
-        return LoginResponse.builder()
-                .accessToken(newAccessToken)
-                .refreshToken(newRefreshToken)
-                .user(userMapper.toResponse(user))
-                .build();
+        return buildLoginResponse(user);
     }
 
     @Override
@@ -281,7 +263,8 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findByResetTokenHash(tokenHash)
                 .orElseThrow(() -> new UnauthorizedException(AuthMessages.INVALID_EXPIRED_RESET_TOKEN));
 
-        if (user.getResetTokenExpiresAt() == null || user.getResetTokenExpiresAt().isBefore(Instant.now())) {
+        if (user.getResetTokenExpiresAt() == null || user.getResetTokenExpiresAt()
+                .isBefore(Instant.now())) {
             throw new UnauthorizedException(AuthMessages.INVALID_EXPIRED_RESET_TOKEN);
         }
 
@@ -344,8 +327,7 @@ public class UserServiceImpl implements UserService {
     private void issueEmailVerificationToken(User user) {
         String rawToken = UUID.randomUUID().toString();
         String tokenHash = hashToken(rawToken);
-        Instant expiresAt = Instant.now()
-                .plus(Duration.ofHours(24));
+        Instant expiresAt = Instant.now().plus(Duration.ofHours(24));
 
         user.setEmailTokenHash(tokenHash);
         user.setEmailTokenExpiresAt(expiresAt);
@@ -362,5 +344,59 @@ public class UserServiceImpl implements UserService {
                 .build();
 
         eventProducer.publishEmailVerificationRequested(event);
+    }
+
+    @Override
+    @Transactional
+    public void deactivateAccount(String userIdHeader) {
+        Long userId = parseUserIdHeader(userIdHeader);
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        user.setActive(false);
+        userRepository.save(user);
+
+        AccountDeactivatedEvent event = AccountDeactivatedEvent.builder()
+                .eventId(java.util.UUID.randomUUID())
+                .occurredAt(Instant.now())
+                .correlationId(MDC.get(CorrelationIdFilter.MDC_KEY))
+                .userId(user.getId())
+                .email(user.getEmail())
+                .build();
+
+        eventProducer.publishAccountDeactivated(event);
+    }
+
+    @Override
+    @Transactional
+    public LoginResponse reactivateAccount(LoginRequest request) {
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new UnauthorizedException(AuthMessages.INVALID_CREDENTIALS));
+
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            throw new UnauthorizedException(AuthMessages.INVALID_CREDENTIALS);
+        }
+
+        if (user.isActive()) {
+            throw new ConflictException(AuthMessages.ACCOUNT_ALREADY_ACTIVE);
+        }
+
+        user.setActive(true);
+        user.setLastLoginAt(Instant.now());
+        userRepository.save(user);
+
+        return buildLoginResponse(user);
+    }
+
+    private LoginResponse buildLoginResponse(User user) {
+        String accessToken = jwtService.generateAccessToken(user);
+        String refreshToken = jwtService.generateRefreshToken(user);
+
+        return LoginResponse.builder()
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .user(userMapper.toResponse(user))
+                .build();
     }
 }
