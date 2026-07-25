@@ -3,6 +3,7 @@ package com.shopdarcel.user.exception;
 import com.shopdarcel.common.exception.*;
 import com.shopdarcel.common.response.ApiError;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -20,11 +21,14 @@ import java.util.List;
  * {@code @ResponseBody}, so every handler method here returns JSON
  * directly rather than a view name.
  */
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(ConflictException.class)
     public ResponseEntity<ApiError> handleConflict(ConflictException ex, HttpServletRequest request) {
+        log.warn("Conflict on {}: {}", request.getRequestURI(), ex.getMessage());
+
         ApiError error = ApiError.builder()
                 .status(HttpStatus.CONFLICT.value())
                 .error("CONFLICT")
@@ -37,6 +41,8 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ApiError> handleNotFound(ResourceNotFoundException ex, HttpServletRequest request) {
+        log.warn("Not found on {}: {}", request.getRequestURI(), ex.getMessage());
+
         ApiError error = ApiError.builder()
                 .status(HttpStatus.NOT_FOUND.value())
                 .error("NOT_FOUND")
@@ -44,6 +50,62 @@ public class GlobalExceptionHandler {
                 .path(request.getRequestURI())
                 .build();
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(error);
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiError> handleMalformedJson(HttpMessageNotReadableException ex, HttpServletRequest request) {
+        log.warn("Malformed request body on {}", request.getRequestURI());
+
+        ApiError error = ApiError.builder()
+                .status(HttpStatus.BAD_REQUEST.value())
+                .error("MALFORMED_REQUEST")
+                .message("Request body is missing or invalid JSON")
+                .path(request.getRequestURI())
+                .build();
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(error);
+    }
+
+    @ExceptionHandler(UnauthorizedException.class)
+    public ResponseEntity<ApiError> handleUnauthorized(UnauthorizedException ex, HttpServletRequest request) {
+        log.warn("Unauthorized on {}: {}", request.getRequestURI(), ex.getMessage());
+
+        ApiError error = ApiError.builder()
+                .status(HttpStatus.UNAUTHORIZED.value())
+                .error("UNAUTHORIZED")
+                .message(ex.getMessage())
+                .path(request.getRequestURI())
+                .build();
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(error);
+    }
+
+    @ExceptionHandler(ForbiddenException.class)
+    public ResponseEntity<ApiError> handleForbidden(ForbiddenException ex, HttpServletRequest request) {
+        log.warn("Forbidden on {}: {}", request.getRequestURI(), ex.getMessage());
+
+        ApiError error = ApiError.builder()
+                .status(HttpStatus.FORBIDDEN.value())
+                .error("FORBIDDEN")
+                .message(ex.getMessage())
+                .path(request.getRequestURI())
+                .build();
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(error);
+    }
+
+    @ExceptionHandler(ValidationException.class)
+    public ResponseEntity<ApiError> handleValidation(ValidationException ex, HttpServletRequest request) {
+        log.warn("Validation failed on {}: {}", request.getRequestURI(), ex.getMessage());
+
+        ApiError error = ApiError.builder()
+                .status(HttpStatus.BAD_REQUEST.value())
+                .error("VALIDATION_FAILED")
+                .message(ex.getMessage())
+                .path(request.getRequestURI())
+                .build();
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(error);
     }
 
@@ -59,6 +121,12 @@ public class GlobalExceptionHandler {
                         .build())
                 .toList();
 
+        String fieldSummary = fieldErrors.stream()
+                .map(fe -> fe.getField() + ": " + fe.getMessage())
+                .collect(java.util.stream.Collectors.joining("; "));
+
+        log.warn("Validation failed on {}: {}", request.getRequestURI(), fieldSummary);
+
         ApiError error = ApiError.builder()
                 .status(HttpStatus.BAD_REQUEST.value())
                 .error("VALIDATION_FAILED")
@@ -70,51 +138,17 @@ public class GlobalExceptionHandler {
                 .body(error);
     }
 
-    @ExceptionHandler(HttpMessageNotReadableException.class)
-    public ResponseEntity<ApiError> handleMalformedJson(HttpMessageNotReadableException ex, HttpServletRequest request) {
-        ApiError error = ApiError.builder()
-                .status(HttpStatus.BAD_REQUEST.value())
-                .error("MALFORMED_REQUEST")
-                .message("Request body is missing or invalid JSON")
-                .path(request.getRequestURI())
-                .build();
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(error);
-    }
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ApiError> handleUnexpected(Exception ex, HttpServletRequest request) {
+        log.error("Unexpected error on {}", request.getRequestURI(), ex);
 
-    @ExceptionHandler(UnauthorizedException.class)
-    public ResponseEntity<ApiError> handleUnauthorized(UnauthorizedException ex, HttpServletRequest request) {
         ApiError error = ApiError.builder()
-                .status(HttpStatus.UNAUTHORIZED.value())
-                .error("UNAUTHORIZED")
-                .message(ex.getMessage())
+                .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
+                .error("INTERNAL_SERVER_ERROR")
+                .message("An unexpected error occurred")
                 .path(request.getRequestURI())
                 .build();
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(error);
-    }
-
-    @ExceptionHandler(ForbiddenException.class)
-    public ResponseEntity<ApiError> handleForbidden(ForbiddenException ex, HttpServletRequest request) {
-        ApiError error = ApiError.builder()
-                .status(HttpStatus.FORBIDDEN.value())
-                .error("FORBIDDEN")
-                .message(ex.getMessage())
-                .path(request.getRequestURI())
-                .build();
-        return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body(error);
-    }
-
-    @ExceptionHandler(ValidationException.class)
-    public ResponseEntity<ApiError> handleValidation(ValidationException ex, HttpServletRequest request) {
-        ApiError error = ApiError.builder()
-                .status(HttpStatus.BAD_REQUEST.value())
-                .error("VALIDATION_FAILED")
-                .message(ex.getMessage())
-                .path(request.getRequestURI())
-                .build();
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(error);
     }
 }

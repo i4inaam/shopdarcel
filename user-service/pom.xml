@@ -72,6 +72,12 @@
             <scope>runtime</scope>
         </dependency>
 
+        <!-- JSON structured logging -->
+        <dependency>
+            <groupId>net.logstash.logback</groupId>
+            <artifactId>logstash-logback-encoder</artifactId>
+        </dependency>
+
         <!-- Database -->
         <dependency>
             <groupId>org.postgresql</groupId>
