@@ -1,6 +1,6 @@
 package com.shopdarcel.user.service;
 
-import com.shopdarcel.user.dto.*;
+import com.shopdarcel.user.dto.user.*;
 
 /**
  * Business logic contract for user account operations.

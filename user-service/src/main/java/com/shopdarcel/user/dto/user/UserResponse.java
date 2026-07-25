@@ -1,4 +1,4 @@
-package com.shopdarcel.user.dto;
+package com.shopdarcel.user.dto.user;
 
 import com.shopdarcel.user.entity.Gender;
 import com.shopdarcel.user.entity.UserRole;

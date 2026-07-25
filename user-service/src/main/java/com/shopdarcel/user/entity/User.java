@@ -136,4 +136,17 @@ public class User extends BaseEntity {
      */
     @Column(name = "email_token_expires_at")
     private Instant emailTokenExpiresAt;
+
+    /**
+     * Convenience accessor combining first and last name, since last name
+     * is optional. Used wherever a single display name is needed (Kafka
+     * events, saved address recipient name, etc.) instead of duplicating
+     * this null-check logic in each service.
+     */
+    public String getFullName() {
+        if (lastName == null || lastName.isBlank()) {
+            return firstName;
+        }
+        return firstName + " " + lastName;
+    }
 }

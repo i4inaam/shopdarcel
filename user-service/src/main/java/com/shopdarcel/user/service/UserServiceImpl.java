@@ -4,13 +4,14 @@ import com.shopdarcel.common.dto.kafka.*;
 import com.shopdarcel.common.exception.*;
 import com.shopdarcel.user.config.CorrelationIdFilter;
 import com.shopdarcel.user.constants.AuthMessages;
-import com.shopdarcel.user.dto.*;
+import com.shopdarcel.user.dto.user.*;
 import com.shopdarcel.user.entity.User;
 import com.shopdarcel.user.entity.UserRole;
 import com.shopdarcel.user.kafka.UserEventProducer;
 import com.shopdarcel.user.mapper.UserMapper;
 import com.shopdarcel.user.repository.UserRepository;
 import com.shopdarcel.user.security.JwtService;
+import com.shopdarcel.user.util.UserIdHeaderResolver;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.MDC;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -44,6 +45,7 @@ public class UserServiceImpl implements UserService {
     private final UserEventProducer eventProducer;
     private final JwtService jwtService;
     private final LoginAttemptService loginAttemptService;
+    private final UserIdHeaderResolver userIdHeaderResolver;
 
     @Override
     @Transactional
@@ -75,7 +77,7 @@ public class UserServiceImpl implements UserService {
                 .correlationId(MDC.get(CorrelationIdFilter.MDC_KEY))
                 .userId(savedUser.getId())
                 .email(savedUser.getEmail())
-                .fullName(buildFullName(savedUser))
+                .fullName(savedUser.getFullName())
                 .role(savedUser.getRole().name())
                 .build();
 
@@ -83,13 +85,6 @@ public class UserServiceImpl implements UserService {
         issueEmailVerificationToken(savedUser);
 
         return userMapper.toResponse(savedUser);
-    }
-
-    private String buildFullName(User user) {
-        if (user.getLastName() == null || user.getLastName().isBlank()) {
-            return user.getFirstName();
-        }
-        return user.getFirstName() + " " + user.getLastName();
     }
 
     @Override
@@ -144,7 +139,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserResponse getCurrentUser(String userIdHeader) {
-        Long userId = parseUserIdHeader(userIdHeader);
+        Long userId = userIdHeaderResolver.resolve(userIdHeader);
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException(AuthMessages.USER_NOT_FOUND));
         return userMapper.toResponse(user);
@@ -153,7 +148,7 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public void changePassword(String userIdHeader, ChangePasswordRequest request) {
-        Long userId = parseUserIdHeader(userIdHeader);
+        Long userId = userIdHeaderResolver.resolve(userIdHeader);
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException(AuthMessages.USER_NOT_FOUND));
@@ -184,7 +179,7 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public UserResponse updateProfile(String userIdHeader, UpdateProfileRequest request) {
-        Long userId = parseUserIdHeader(userIdHeader);
+        Long userId = userIdHeaderResolver.resolve(userIdHeader);
         validateBirthYear(request.getBirthYear());
 
         User user = userRepository.findById(userId)
@@ -205,17 +200,6 @@ public class UserServiceImpl implements UserService {
 
         User savedUser = userRepository.save(user);
         return userMapper.toResponse(savedUser);
-    }
-
-    private Long parseUserIdHeader(String userIdHeader) {
-        if (userIdHeader == null || userIdHeader.isBlank()) {
-            throw new UnauthorizedException(AuthMessages.MISSING_USER_ID_HEADER);
-        }
-        try {
-            return Long.parseLong(userIdHeader);
-        } catch (NumberFormatException ex) {
-            throw new UnauthorizedException(AuthMessages.MISSING_USER_ID_HEADER);
-        }
     }
 
     private void validateBirthYear(Integer birthYear) {
@@ -349,7 +333,7 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public void deactivateAccount(String userIdHeader) {
-        Long userId = parseUserIdHeader(userIdHeader);
+        Long userId = userIdHeaderResolver.resolve(userIdHeader);
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));

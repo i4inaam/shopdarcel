@@ -1,6 +1,6 @@
 package com.shopdarcel.user.mapper;
 
-import com.shopdarcel.user.dto.UserResponse;
+import com.shopdarcel.user.dto.user.UserResponse;
 import com.shopdarcel.user.entity.User;
 import org.mapstruct.Mapper;
 

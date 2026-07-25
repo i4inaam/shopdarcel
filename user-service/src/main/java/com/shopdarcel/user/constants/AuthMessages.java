@@ -26,4 +26,5 @@ public final class AuthMessages {
     public static final String ACCOUNT_DEACTIVATION_SUCCESS = "Account deactivated successfully";
     public static final String ACCOUNT_ALREADY_ACTIVE = "Account is already active";
     public static final String ACCOUNT_REACTIVATION_SUCCESS = "Account reactivated successfully";
+    public static final String ADDRESS_NOT_FOUND =  "No address found";
 }

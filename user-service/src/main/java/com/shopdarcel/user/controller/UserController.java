@@ -1,7 +1,7 @@
 package com.shopdarcel.user.controller;
 
 import com.shopdarcel.user.constants.AuthMessages;
-import com.shopdarcel.user.dto.*;
+import com.shopdarcel.user.dto.user.*;
 import com.shopdarcel.user.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
