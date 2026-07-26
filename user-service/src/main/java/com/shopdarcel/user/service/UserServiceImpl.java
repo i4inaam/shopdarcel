@@ -14,6 +14,9 @@ import com.shopdarcel.user.security.JwtService;
 import com.shopdarcel.user.util.UserIdHeaderResolver;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.MDC;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -46,6 +49,7 @@ public class UserServiceImpl implements UserService {
     private final JwtService jwtService;
     private final LoginAttemptService loginAttemptService;
     private final UserIdHeaderResolver userIdHeaderResolver;
+    private final CacheManager cacheManager;
 
     @Override
     @Transactional
@@ -138,6 +142,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Cacheable(value = "userProfiles", key = "#userIdHeader")
     public UserResponse getCurrentUser(String userIdHeader) {
         Long userId = userIdHeaderResolver.resolve(userIdHeader);
         User user = userRepository.findById(userId)
@@ -147,6 +152,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "userProfiles", key = "#userIdHeader")
     public void changePassword(String userIdHeader, ChangePasswordRequest request) {
         Long userId = userIdHeaderResolver.resolve(userIdHeader);
 
@@ -178,6 +184,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "userProfiles", key = "#userIdHeader")
     public UserResponse updateProfile(String userIdHeader, UpdateProfileRequest request) {
         Long userId = userIdHeaderResolver.resolve(userIdHeader);
         validateBirthYear(request.getBirthYear());
@@ -260,6 +267,9 @@ public class UserServiceImpl implements UserService {
         user.setAccountLockedAt(null);
         userRepository.save(user);
 
+        cacheManager.getCache("userProfiles")
+                .evict(user.getId().toString());
+
         PasswordChangedEvent event = PasswordChangedEvent.builder()
                 .eventId(UUID.randomUUID())
                 .occurredAt(Instant.now())
@@ -298,6 +308,8 @@ public class UserServiceImpl implements UserService {
         user.setEmailTokenHash(null);
         user.setEmailTokenExpiresAt(null);
         userRepository.save(user);
+        cacheManager.getCache("userProfiles")
+                .evict(user.getId().toString());
     }
 
     @Override
@@ -332,6 +344,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "userProfiles", key = "#userIdHeader")
     public void deactivateAccount(String userIdHeader) {
         Long userId = userIdHeaderResolver.resolve(userIdHeader);
 
@@ -369,6 +382,8 @@ public class UserServiceImpl implements UserService {
         user.setActive(true);
         user.setLastLoginAt(Instant.now());
         userRepository.save(user);
+        cacheManager.getCache("userProfiles")
+                .evict(user.getId().toString());
 
         return buildLoginResponse(user);
     }
