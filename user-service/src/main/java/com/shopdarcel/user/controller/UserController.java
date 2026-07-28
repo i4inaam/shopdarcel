@@ -1,8 +1,14 @@
 package com.shopdarcel.user.controller;
 
+import com.shopdarcel.common.response.ApiError;
 import com.shopdarcel.user.constants.AuthMessages;
 import com.shopdarcel.user.dto.user.*;
 import com.shopdarcel.user.service.UserService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -40,6 +46,17 @@ public class UserController {
      * @param request login credentials
      * @return tokens and basic user profile info, with HTTP 200 OK
      */
+    @Operation(summary = "Authenticate a user", description = "Verifies credentials and issues access/refresh tokens. Locks the account after 5 consecutive failed attempts.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Login successful",
+                    content = @Content(schema = @Schema(implementation = LoginResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Invalid email or password",
+                    content = @Content(schema = @Schema(implementation = ApiError.class))),
+            @ApiResponse(responseCode = "403", description = "Account is locked or deactivated",
+                    content = @Content(schema = @Schema(implementation = ApiError.class))),
+            @ApiResponse(responseCode = "400", description = "Validation failed (missing email/password)",
+                    content = @Content(schema = @Schema(implementation = ApiError.class)))
+    })
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
         LoginResponse response = userService.login(request);
